@@ -24,6 +24,7 @@ byte colPins[COLS] = {7, 6, 5, 4};
 
 Keypad myKeypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 int i = 0;
+int start = 0;
 
 //------------------------------------------------------------------------------------------------------
 
@@ -39,6 +40,10 @@ void loop() {
 
   char customKey = myKeypad.getKey(); //defining the key that was pressed
 
+  if(start == 0){
+    digitalWrite(green, HIGH);
+    start++;
+  }
   
   if(customKey) {
     keypadPW[i] = customKey; //inputting the key pressed into an array
@@ -74,6 +79,10 @@ void loop() {
           password [j] = customKey; //inputting the key pressed into an array
           Serial.println(customKey);
           j++;
+          if(customKey == '#' || customKey == '*'){
+            Serial.println("This character can not be in password. Continue password.");
+            j--;
+          }
         }
         delay(100);
       }
