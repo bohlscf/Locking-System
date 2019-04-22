@@ -1,0 +1,84 @@
+#include <LiquidCrystal.h>
+
+// initialize the library by associating any needed LCD interface pin
+// with the arduino pin number it is connected to
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+String opt1 = "1. press '*' to reset your guess";
+int size1 = opt1.length()-15;
+String opt2 = "2. press '#' to set new password";
+int size2 = opt2.length()-15;
+String opt3 = "3. press 'A' (0) to lock the locker";
+int size3 = opt3.length()-15;
+String opt4 = "4. press any numbers to type in passcode";
+int size4 = opt4.length()-15;
+
+void setup() {
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.setCursor(0,0);
+  lcd.print("Here are options");
+  delay(1000);
+  lcd.clear();
+}
+
+void loop() {
+
+  
+  //lcd.setCursor(0,1);//display in the next column 
+  lcd.print(opt1);
+  delay(1000);
+  for (int positionCounter = 0; positionCounter < size1; positionCounter++) {
+    // scroll one position left:
+    lcd.scrollDisplayLeft();
+    // wait a bit:
+    delay(300);
+  }
+  delay(1000);
+  lcd.clear();
+  
+ //lcd.setCursor(0,1);//display in the next column 
+lcd.print(opt2);
+delay(1000);
+  for (int positionCounter = 0; positionCounter < size2; positionCounter++) {
+    // scroll one position left:
+    lcd.scrollDisplayLeft();
+    // wait a bit:
+    delay(300);
+  }
+  delay(1000);
+  lcd.clear();
+
+ //lcd.setCursor(0,1);//display in the next column 
+  lcd.print(opt3);
+  delay(1000);
+  for (int positionCounter = 0; positionCounter < size3; positionCounter++) {
+    // scroll one position left:
+    lcd.scrollDisplayLeft();
+    // wait a bit:
+    delay(300);
+  }
+  delay(1000);
+  lcd.clear();
+
+// lcd.setCursor(0,1);//display in the next column 
+  lcd.print(opt4);
+  delay(1000);
+  for (int positionCounter = 0; positionCounter < size4; positionCounter++) {
+    // scroll one position left:
+    lcd.scrollDisplayLeft();
+    // wait a bit:
+    delay(300);
+  }
+  
+  // delay at the end of the full loop:
+  delay(1000);
+
+  lcd.clear();
+  lcd.print("Here are options");
+  delay(1000);
+  lcd.clear();
+
+}
