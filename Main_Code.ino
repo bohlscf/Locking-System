@@ -18,7 +18,7 @@ int p3;
 int p4;
 
 char password [4]= {'1', '2', '3', '4'}; //initializing password
-char reservedPassword [4] = {random(4)}; //this will be generated somewhere else
+char reservedPassword [4] = {'5', '6', '7', '8'}; //this will be generated somewhere else
 char keypadPW[4];   //password applied to keypad 
 int position = 0;   //keypad position
 int lockerOpen = 0; //1 when the locker is open, 0 when the locker is locked
