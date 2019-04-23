@@ -12,9 +12,13 @@ int red = 13;
 int pressurePin = A0;
 int reservePin = A3;
 int LEDpin1 = 2;
+int p1;
+int p2;
+int p3;
+int p4;
 
 char password [4]= {'1', '2', '3', '4'}; //initializing password
-char reservedPassword [4] = {'5', '6', '7', '8'}; //this will be generated somewhere else
+char reservedPassword [4] = {random(4)}; //this will be generated somewhere else
 char keypadPW[4];   //password applied to keypad 
 int position = 0;   //keypad position
 int lockerOpen = 0; //1 when the locker is open, 0 when the locker is locked
@@ -41,6 +45,12 @@ int start1 = 0; //used to set up when device turns on
 int start2 = 0; //used to set up when locker is first reserved
 int reserveSignal = 0;
 
+#include <LiquidCrystal.h>
+const int rs = 22, en = 24, d4 = 26, d5 = 28, d6 = 30, d7 = 32;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+String opt1;
+
+
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void setup() {
@@ -49,6 +59,12 @@ void setup() {
   pinMode(red, OUTPUT);
   pinMode(yellow, OUTPUT);
   myservo.attach(servoPin);
+  randomSeed(analogRead(0));
+
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  lcd.clear();
+  delay(1000);
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -62,6 +78,9 @@ void loop() {
     digitalWrite(red, HIGH);
     Serial.println("Reserve the locker from website");
     //Serial.println("Press 'B' (0) to reseve the locker");
+
+    lcddisp("Reserve the locker from website");  
+    
     openLocker();
     start1++;
   }
@@ -74,6 +93,19 @@ void loop() {
      Serial.println("4. press any numbers to type in passcode"); 
      Serial.println("");
      start2++;
+
+     lcddisp("Here are your options:");
+     delay(1000);
+     lcddisp("1. press '*' to reset your guess");
+     delay(1000);
+     lcddisp("2. press '#' to set new password");
+     delay(1000);
+     lcddisp("3. press 'A' (0) to lock the locker");
+     delay(1000);
+     lcddisp("4. press any numbers to type in passcode");
+     delay(1000); 
+     lcddisp("");
+     
   }
 
   reserveSignal = analogRead(reservePin);
@@ -82,17 +114,38 @@ void loop() {
       i = 0;
       reserved = 1;
       Serial.println("Locker is now reserved");
+      
+      lcddisp("Locker is now reserved");
+      delay(1100);
+      
       digitalWrite(yellow, HIGH);
-      randNumber = random(9999);
+      p1 = random(1,9);
+      p2 = random(1,9);
+      p3 = random(1,9);
+      p4 = random(1,9);
+      delay(10);
       Serial.print("Number to verify reserved locker: ");
-      Serial.println(randNumber);
+
+      lcddisp("Number to verify reserved locker: ");
+      
+      Serial.print(reservedPassword);
+      String opt4= String(reservedPassword);
+      lcddisp(opt4);delay(1000);
+      
       Serial.println("Please type in the number you received to claim your locker");  
+
+      lcddisp("Please type in the number you received to claim your locker");
   }
     
   if(customKey) {
     if(reserved == 2){
-          keypadPW[i] = customKey; //inputting the key pressed into an array
+          keypadPW[i] = customKey;//inputting the key pressed into an array
+          
           Serial.println(customKey);
+          
+          String opt2= String(customKey);
+          lcddisp(opt2);
+          
           i++; //incrementing array
           position++; //move to next password input
       
@@ -103,12 +156,17 @@ void loop() {
               position = 0;
               i = 0;
               Serial.println("guess is reset");
+
+              lcddisp("guess is reset");
+              delay(1000);
           }
       
           else if(customKey == '#' && lockerOpen == 0){
               position--; //set equal to zero if you want to reset the password with this
               i--;    //set equal to zero if you want to reset the password with this
               Serial.println("Unlock first to reset password");
+
+              lcddisp("Unlock first to reset password");delay(1000);
           }
             
           //Set the password
@@ -116,6 +174,8 @@ void loop() {
               position = 0;
               i = 0;
               Serial.println("type in new password");
+
+              lcddisp("type in new password");delay(1000);
         
               int j = 0;
               while(j<4){
@@ -123,20 +183,27 @@ void loop() {
                 if(customKey) {
                   password [j] = customKey; //inputting the key pressed into an array
                   Serial.println(customKey);
+                  String opt3= String(customKey);
+                   lcddisp(opt3);delay(1000);
                   j++;
                   if(customKey == '#' || customKey == '*' || customKey == 'A' || customKey == 'B'){
                     Serial.println("This character can not be in password. Continue password.");
+
+                    lcddisp("This character can not be in password. Continue password.");delay(1000);
                     j--;
                   }
                 }
                 delay(100);
               }
               Serial.println("password set");
+              lcddisp("password set");delay(1000);
           } 
           
           else if(customKey == '0'){  //   should be A
               lockerOpen = 0;
               Serial.println("Locker is locked");
+
+              lcddisp("Locker is locked");delay(1000);
               position--;
               i--;
               closeLocker();
@@ -146,6 +213,8 @@ void loop() {
               i--;
               position--;
               Serial.println("The locker is already open");
+
+              lcddisp("The locker is already open");delay(1000);
           }
     } 
 
@@ -183,6 +252,8 @@ void loop() {
              
             else {
               Serial.println("Incorrect passcode. Locker still needs to be varified");
+
+              lcddisp("Wrong passcode");
               position = 0;
               lockerOpen = 0;
               i = 0;
@@ -230,6 +301,21 @@ void closeLocker(){
 void openLocker(){
   pos = 40;
   myservo.write(pos);
+}
+
+
+void lcddisp(String opt){
+  int size1= opt1.length()-15;
+  lcd.print(opt);
+
+  for (int positionCounter = 0; positionCounter < size1; positionCounter++) {
+    // scroll one position left:
+    lcd.scrollDisplayLeft();
+    // wait a bit:
+    delay(300);
+  }
+  delay(1000);
+  lcd.clear();
 }
 /*
 void start2Method(){
