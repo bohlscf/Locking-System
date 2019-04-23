@@ -1,7 +1,6 @@
-#include <Keypad.h>
+#include <Keypad.h> //arduino library from Mark Stanley and Alexander Brevig
 #include <Servo.h>
-int pressurePin = A0;
-int LEDpin1 = 2;
+
 int force1;
 int pos=0;
 Servo myservo;
@@ -10,6 +9,9 @@ int green = 2;
 int yellow = 3;
 int servoPin = 12;
 int red = 13;
+int pressurePin = A0;
+int reservePin = A3;
+int LEDpin1 = 2;
 
 char password [4]= {'1', '2', '3', '4'}; //initializing password
 char reservedPassword [4] = {'5', '6', '7', '8'}; //this will be generated somewhere else
@@ -37,6 +39,7 @@ Keypad myKeypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 int i = 0;
 int start1 = 0; //used to set up when device turns on
 int start2 = 0; //used to set up when locker is first reserved
+int reserveSignal = 0;
 
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -57,7 +60,8 @@ void loop() {
     //start1Method();
     digitalWrite(green, LOW);
     digitalWrite(red, HIGH);
-    Serial.println("Press 'B' (0) to reseve the locker");
+    Serial.println("Reserve the locker from website");
+    //Serial.println("Press 'B' (0) to reseve the locker");
     openLocker();
     start1++;
   }
@@ -70,6 +74,19 @@ void loop() {
      Serial.println("4. press any numbers to type in passcode"); 
      Serial.println("");
      start2++;
+  }
+
+  reserveSignal = analogRead(reservePin);
+  if(reserved == 0 && reserveSignal > 600){
+      position = 0;
+      i = 0;
+      reserved = 1;
+      Serial.println("Locker is now reserved");
+      digitalWrite(yellow, HIGH);
+      randNumber = random(9999);
+      Serial.print("Number to verify reserved locker: ");
+      Serial.println(randNumber);
+      Serial.println("Please type in the number you received to claim your locker");  
   }
     
   if(customKey) {
@@ -132,7 +149,8 @@ void loop() {
           }
     } 
 
-    else if(reserved == 0 && customKey == '0'){// should be B
+  //method when using keypad, not needed when using website/app
+   /* else if(reserved == 0 && customKey == '0'){// should be B
           position = 0;
           i = 0;
           reserved = 1;
@@ -142,7 +160,8 @@ void loop() {
           Serial.print("Number to verify reserved locker: ");
           Serial.println(randNumber);
           Serial.println("Please type in the number you received to claim your locker");
-    }
+          
+    }*/
   }
     while(reserved == 1){
           char myKey = myKeypad.getKey();
