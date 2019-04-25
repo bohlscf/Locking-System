@@ -2,7 +2,7 @@
 #include <Servo.h>
 #include <LiquidCrystal.h>
 
-
+//pins being used:
 int pos=0;
 Servo myservo;
 
@@ -10,9 +10,9 @@ int green = 2;
 int yellow = 3;
 int servoPin = 12;
 int red = 13;
-int pressurePin = A0;
+int buzzerPin = 23;
+int pressurePin = A15;
 int reservePin = A3;
-int LEDpin1 = 2;
 
 char password [4]= {'1', '2', '3', '4'}; //initializing password
 char reservedPassword [4] = {'5', '6', '7', '8'}; //this will be generated somewhere else
@@ -41,7 +41,7 @@ int i = 0;
 int start1 = 0; //used to set up when device turns on
 int start2 = 0; //used to set up when locker is first reserved
 int reserveSignal = 0;
-int force1;
+int force;
 
 const int rs = 22, en = 24, d4 = 26, d5 = 28, d6 = 30, d7 = 32;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -55,6 +55,7 @@ void setup() {
   pinMode(green, OUTPUT);
   pinMode(red, OUTPUT);
   pinMode(yellow, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
   myservo.attach(servoPin);
   randomSeed(analogRead(0));
 
@@ -71,17 +72,8 @@ void loop() {
   char customKey = myKeypad.getKey(); //defining the key that was pressed
   
   if(start1 == 0){
-    //start1Method();
-    digitalWrite(green, LOW);
-    digitalWrite(red, HIGH);
-    Serial.println("Reserve the locker from website");
-    Serial.println("Press 'B' (0) to reseve the locker");
-
-    lcd.print("Reserve locker");
-    lcd.setCursor(0,1);
-    lcd.print("from website");  
-    
     openLocker();
+    start1Method();    
     start1++;
   }
   if(start2 == 0 && reserved == 2){
@@ -107,6 +99,13 @@ void loop() {
   }
 
   reserveSignal = analogRead(reservePin);
+  force = analogRead(pressurePin);
+  if(reserved == 0 && force > 100){
+    tone(buzzerPin, 440);
+  }
+  else{
+    noTone(buzzerPin);
+  }
 /*
   if(reserved == 0 && reserveSignal > 600){
       position = 0;
@@ -138,7 +137,7 @@ void loop() {
     if(reserved == 2){
           keypadPW[i] = customKey;//inputting the key pressed into an array
           
-          Serial.println(customKey);
+          //Serial.println(customKey);
           
           String opt2= String(customKey);
           lcd.clear();
@@ -204,14 +203,28 @@ void loop() {
               lcd.print("password set");
           } 
           
-          else if(customKey == '0'){  //   should be A
+          else if(customKey == '0' || customKey == 'A'){  //   should be A
               lockerOpen = 0;
               Serial.println("Locker is locked");
               lcd.clear();
               lcd.print("Locker is locked");
-              position--;
-              i--;
+              position = 0;
+              i = 0;
               closeLocker();
+          }
+//This will be replaced by logging out on the app
+          else if(customKey == 'C' && lockerOpen == 1){
+            i = 0;
+            position = 0;
+            reserved = 0;
+            lockerOpen = 0;
+            closeLocker();
+            digitalWrite(yellow, LOW);
+            Serial.println("Locker is no longer reserved");
+            lcd.clear();
+            lcd.print("Locker is no");
+            lcd.setCursor(0,1);
+            lcd.print("longer reserved");
           }
 
           else if(lockerOpen == 1){
@@ -261,6 +274,7 @@ void loop() {
             if ((strncmp(reservedPassword, keypadPW, 4) == 0)) {
               reserved = 2;
               lockerOpen = 1;
+              openLocker();
               Serial.println("Locker is now able to be used");
               position = 0;
               i = 0;
@@ -280,31 +294,18 @@ void loop() {
   //check the password
   if(position == 4) {
       if ((strncmp(password, keypadPW, 4) == 0)) {
-          Serial.println("Locker is open");
           position = 0;
           i = 0;
           openLocker();
-          lockerOpen = 1;  
+          lockerOpen = 1;
       }
       else {
-          Serial.println("Locker is locked");
           position = 0;
           i = 0;
           closeLocker();
           lockerOpen = 0;
       }
-  }  
-  
-  if(lockerOpen == 1){
-      digitalWrite(green, HIGH);
-      digitalWrite(red, LOW);
-      openLocker();
-  }
-  
-  else{
-    digitalWrite(green, LOW);
-    digitalWrite(red, HIGH);
-  }
+  } 
 }
 //---------------------------       OTHER METHODS         ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //void myMethod(int i, int position, char customKey, int lockerOpen){
@@ -312,11 +313,37 @@ void loop() {
 void closeLocker(){
     pos = 170;
     myservo.write(pos);
+    digitalWrite(green, LOW);
+    digitalWrite(red, HIGH);
+    Serial.println("Locker is locked");
+    lcd.clear();
+    lcd.print("Locker is locked");
 }
 
 void openLocker(){
   pos = 40;
   myservo.write(pos);
+  digitalWrite(green, HIGH);
+  digitalWrite(red, LOW);
+  Serial.println("Locker is open");
+  lcd.clear();
+  lcd.print("Locker is open");
+          
+}
+
+void start1Method(){
+  digitalWrite(green, LOW);
+  digitalWrite(red, HIGH);
+  Serial.println("Reserve the locker from website");
+  Serial.println("Press 'B' (0) to reseve the locker");
+
+  lcd.print("Reserve locker");
+  lcd.setCursor(0,1);
+  lcd.print("from website"); 
+}
+
+void testMethod(){
+  
 }
 
 
