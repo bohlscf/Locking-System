@@ -339,6 +339,8 @@ void loop() {
               lcd.print("Locker is no");
               lcd.setCursor(0,1);
               lcd.print("longer reserved");
+              delay(1000);
+              start1 = 0;
           }
     }
 //-------------------------------------    CHECK PASSWORD   -----------------------------------------------------------------
