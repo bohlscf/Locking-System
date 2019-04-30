@@ -93,12 +93,11 @@ void loop() {
      delay(2000);
      lcd.clear();
      lcd.setCursor(0,0);
-     lcd.print("A to lock");
-     lcd.setCursor(0,1);
-     lcd.print("passcode is 1234");
+     lcd.print("0 to lock");
   }
 
   reserveSignal = analogRead(reservePin);
+  //Serial.println(reserveSignal);
   force = analogRead(pressurePin);
   if(reserved == 0 && force > 100){
     tone(buzzerPin, 440);
@@ -106,31 +105,64 @@ void loop() {
   else{
     noTone(buzzerPin);
   }
-/*
+
   if(reserved == 0 && reserveSignal > 600){
       position = 0;
       i = 0;
       reserved = 1;
       Serial.println("Locker is now reserved");
-      
-      lcddisp("Locker is now reserved");
-      delay(1100);
+      Serial.print("Number to verify reserved locker: ");
+      randNumber = random(9999);
+      Serial.println(randNumber);
+      Serial.println("Please type in the number you received to claim your locker");
       
       digitalWrite(yellow, HIGH);
       delay(10);
-      Serial.print("Number to verify reserved locker: ");
-
-      lcddisp("Number to verify reserved locker: ");
       
-      Serial.print(reservedPassword);
-      String opt4= String(reservedPassword);
-      lcddisp(opt4);delay(1000);
-      
-      Serial.println("Please type in the number you received to claim your locker");  
+      lcd.clear();
+      lcd.print("Locker is now");
+      lcd.setCursor(0,1);
+      lcd.print("reserved");
+      delay(1500);
 
-      lcddisp("Please type in the number you received to claim your locker");
+      lcd.clear();
+      lcd.print("Your number is");
+      lcd.setCursor(0,1);
+      lcd.print(randNumber);
+
+      for(int j = 3; j >= 0; j--){
+        reservedPassword[j] = char(48 + randNumber % 10);
+        password[j] = reservedPassword[j];
+        position = 0;
+        //Serial.println(reservedPassword[j]);
+        //Serial.println(randNumber % 10);
+        randNumber = randNumber / 10;
+      }
+          
+      //String opt4= String(reservedPassword);
+      //Serial.println(opt4);
+      
+      //lcddisp(opt4);delay(1000);
+      //lcddisp("Please type in the number you received to claim your locker");
   }
-  */
+  else if (reserved == 2 && reserveSignal < 100){
+    i = 0;
+    position = 0;
+    reserved = 0;
+    lockerOpen = 0;
+    openLocker();
+    digitalWrite(green, LOW);
+    digitalWrite(red, HIGH);
+    digitalWrite(yellow, LOW);
+    Serial.println("Locker is no longer reserved");
+    lcd.clear();
+    lcd.print("Locker is no");
+    lcd.setCursor(0,1);
+    lcd.print("longer reserved");
+    delay(1000);
+    start1 = 0;
+  }
+  
 //-----------------------------    KEYPAD INPUTS    -----------------------------------------------------------------------------------------    
   if(customKey) {
     Serial.println(customKey);
@@ -259,8 +291,12 @@ void loop() {
       }
     }
   }
+  
     while(reserved == 1){
           char myKey = myKeypad.getKey();
+          reserveSignal = analogRead(reservePin);
+
+          
           if(myKey){
             keypadPW[i] = myKey; 
             Serial.println(myKey);
@@ -289,7 +325,22 @@ void loop() {
               i = 0;
             }
           }
-  }
+          if(reserveSignal < 100){
+              i = 0;
+              position = 0;
+              reserved = 0;
+              lockerOpen = 0;
+              openLocker();
+              digitalWrite(green, LOW);
+              digitalWrite(red, HIGH);
+              digitalWrite(yellow, LOW);
+              Serial.println("Locker is no longer reserved");
+              lcd.clear();
+              lcd.print("Locker is no");
+              lcd.setCursor(0,1);
+              lcd.print("longer reserved");
+          }
+    }
 //-------------------------------------    CHECK PASSWORD   -----------------------------------------------------------------
   //check the password
   if(position == 4) {
@@ -334,9 +385,11 @@ void openLocker(){
 void start1Method(){
   digitalWrite(green, LOW);
   digitalWrite(red, HIGH);
+  Serial.println();
   Serial.println("Reserve the locker from website");
   Serial.println("Press 'B' (0) to reseve the locker");
 
+  lcd.clear();
   lcd.print("Reserve locker");
   lcd.setCursor(0,1);
   lcd.print("from website"); 
