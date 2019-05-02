@@ -2,9 +2,7 @@
 #include <Servo.h>
 #include <LiquidCrystal.h>
 
-//pins being used:
-int pos=0;
-Servo myservo;
+//pins being used: green - 2; yellow - 3; servo - 12; red - 13; buzzer - 23; keypad - 4:11; pressure - A15; reserve A3; 
 
 int green = 2;
 int yellow = 3;
@@ -13,6 +11,7 @@ int red = 13;
 int buzzerPin = 23;
 int pressurePin = A15;
 int reservePin = A3;
+int reservePin2 = A14;
 
 char password [4]= {'1', '2', '3', '4'}; //initializing password
 char reservedPassword [4] = {'5', '6', '7', '8'}; //this will be generated somewhere else
@@ -42,6 +41,12 @@ int start1 = 0; //used to set up when device turns on
 int start2 = 0; //used to set up when locker is first reserved
 int reserveSignal = 0;
 int force;
+int unreserveTimer = 0;
+int unreserveFlag = 0;
+int timeOutFlag = 1;
+
+int pos=0;
+Servo myservo;
 
 const int rs = 22, en = 24, d4 = 26, d5 = 28, d6 = 30, d7 = 32;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -77,13 +82,7 @@ void loop() {
     start1++;
   }
   if(start2 == 0 && reserved == 2){
-     //start2Method();
-     Serial.println("Here are your options:");
-     Serial.println("1. press '*' to reset your guess");
-     Serial.println("2. press '#' to set new password (locker must be unlocked)");
-     Serial.println("3. press 'A' (0) to lock the locker");
-     Serial.println("4. press any numbers to type in passcode"); 
-     Serial.println("");
+     start2Method();
      start2++;
 
      lcd.clear();
@@ -93,42 +92,26 @@ void loop() {
      delay(2000);
      lcd.clear();
      lcd.setCursor(0,0);
-     lcd.print("0 to lock");
+     lcd.print("A to lock");
   }
 
   reserveSignal = analogRead(reservePin);
   //Serial.println(reserveSignal);
   force = analogRead(pressurePin);
-  if(reserved == 0 && force > 100){
+  
+  if(reserved == 0 && force > 50){
     tone(buzzerPin, 440);
   }
   else{
     noTone(buzzerPin);
   }
 
-  if(reserved == 0 && reserveSignal > 600){
+  if(reserved == 0 && reserveSignal > 600 && timeOutFlag == 1){
       position = 0;
       i = 0;
       reserved = 1;
-      Serial.println("Locker is now reserved");
-      Serial.print("Number to verify reserved locker: ");
       randNumber = random(9999);
-      Serial.println(randNumber);
-      Serial.println("Please type in the number you received to claim your locker");
-      
-      digitalWrite(yellow, HIGH);
-      delay(10);
-      
-      lcd.clear();
-      lcd.print("Locker is now");
-      lcd.setCursor(0,1);
-      lcd.print("reserved");
-      delay(1500);
-
-      lcd.clear();
-      lcd.print("Your number is");
-      lcd.setCursor(0,1);
-      lcd.print(randNumber);
+      reserveMethod();
 
       for(int j = 3; j >= 0; j--){
         reservedPassword[j] = char(48 + randNumber % 10);
@@ -138,34 +121,51 @@ void loop() {
         //Serial.println(randNumber % 10);
         randNumber = randNumber / 10;
       }
-          
-      //String opt4= String(reservedPassword);
-      //Serial.println(opt4);
       
-      //lcddisp(opt4);delay(1000);
-      //lcddisp("Please type in the number you received to claim your locker");
   }
-  else if (reserved == 2 && reserveSignal < 100){
+  else if (reserved == 2 && reserveSignal < 100 ){
     i = 0;
     position = 0;
     reserved = 0;
     lockerOpen = 0;
-    openLocker();
-    digitalWrite(green, LOW);
-    digitalWrite(red, HIGH);
-    digitalWrite(yellow, LOW);
-    Serial.println("Locker is no longer reserved");
-    lcd.clear();
-    lcd.print("Locker is no");
-    lcd.setCursor(0,1);
-    lcd.print("longer reserved");
-    delay(1000);
+    unreserveMethod();
     start1 = 0;
   }
+  else if (reserved == 0 && reserveSignal < 100){
+    timeOutFlag = 1;
+  }
+
+  if(reserved == 2){
+    if(lockerOpen == 1 && unreserveFlag == 0){ 
+      unreserveTimer = unreserveTimer + 10;
+      delay(10);
+      Serial.println(unreserveTimer);
+      if(unreserveTimer >= 5000){
+        unreserveFlag = 1;
+        timeOutFlag = 0;
+        Serial.println("The time has been met");
+        lcd.clear();
+        lcd.print("Open too long");
+        unreserveMethod();
+        i = 0;
+        position = 0;
+        reserved = 0;
+        lockerOpen = 0;
+        start1 = 0;
+      }
+    }
+    else if (lockerOpen == 0) { 
+      unreserveTimer = 0;
+      unreserveFlag = 0;
+    }
+  }
+
+
   
 //-----------------------------    KEYPAD INPUTS    -----------------------------------------------------------------------------------------    
   if(customKey) {
     Serial.println(customKey);
+    unreserveTimer = 0;
     if(reserved == 2){
           keypadPW[i] = customKey;//inputting the key pressed into an array
           
@@ -235,7 +235,7 @@ void loop() {
               lcd.print("password set");
           } 
           
-          else if(customKey == '0' || customKey == 'A'){  //   should be A
+          else if(customKey == 'A'){  //   should be A //customKey == '0' || 
               lockerOpen = 0;
               Serial.println("Locker is locked");
               lcd.clear();
@@ -312,6 +312,8 @@ void loop() {
               lockerOpen = 1;
               openLocker();
               Serial.println("Locker is now able to be used");
+              unreserveTimer = 0;
+              unreserveFlag = 0;
               position = 0;
               i = 0;
             }          
@@ -339,7 +341,7 @@ void loop() {
               lcd.print("Locker is no");
               lcd.setCursor(0,1);
               lcd.print("longer reserved");
-              delay(1000);
+              delay(2500);
               start1 = 0;
           }
     }
@@ -394,24 +396,53 @@ void start1Method(){
   lcd.clear();
   lcd.print("Reserve locker");
   lcd.setCursor(0,1);
-  lcd.print("from website"); 
+  lcd.print("from app"); 
+}
+
+void start2Method(){
+   Serial.println("Here are your options:");
+     Serial.println("1. press '*' to reset your guess");
+     Serial.println("2. press '#' to set new password (locker must be unlocked)");
+     Serial.println("3. press 'A' (0) to lock the locker");
+     Serial.println("4. press any numbers to type in passcode"); 
+     Serial.println("");
+}
+
+void unreserveMethod(){
+    pos = 40;
+    myservo.write(pos);
+    digitalWrite(green, LOW);
+    digitalWrite(red, HIGH);
+    digitalWrite(yellow, LOW);
+    Serial.println("Locker is no longer reserved");
+    lcd.clear();
+    lcd.print("Locker is no");
+    lcd.setCursor(0,1);
+    lcd.print("longer reserved");
+    delay(1000);
+}
+
+void reserveMethod(){
+      Serial.println("Locker is now reserved");
+      Serial.print("Number to verify reserved locker: ");
+      Serial.println(randNumber);
+      Serial.println("Please type in the number you received to claim your locker");
+      
+      digitalWrite(yellow, HIGH);
+      delay(10);
+      
+      lcd.clear();
+      lcd.print("Locker is now");
+      lcd.setCursor(0,1);
+      lcd.print("reserved");
+      delay(1500);
+
+      lcd.clear();
+      lcd.print("Your number is");
+      lcd.setCursor(0,1);
+      lcd.print(randNumber);
 }
 
 void testMethod(){
   
-}
-
-
-void lcddisp(String opt){
-  int size1= opt1.length()-15;
-  lcd.print(opt);
-
-  for (int positionCounter = 0; positionCounter < size1; positionCounter++) {
-    // scroll one position left:
-    lcd.scrollDisplayLeft();
-    // wait a bit:
-    delay(300);
-  }
-  delay(1000);
-  lcd.clear();
 }
