@@ -102,7 +102,7 @@ void loop() {
   //Serial.println(reserveSignal);
   force = analogRead(pressurePin);
   Serial.println(force);
-  
+  delay(50);
   if(reserved == 0 && force > 50){
     tone(buzzerPin, 440);
   }
