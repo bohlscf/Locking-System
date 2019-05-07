@@ -101,10 +101,10 @@ void loop() {
 //------------------------    APP INPUTS    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
   reserveSignal = analogRead(reservePin);
   openSignal = analogRead(appOpenPin);
-  Serial.println(openSignal);
+ // Serial.println(openSignal);
   force = analogRead(pressurePin);
-  
-  if(reserved == 0 && force > 50){
+  Serial.println(force);
+  if(reserved == 0 && force < 800                          ){
     tone(buzzerPin, 440);
   }
   else{
@@ -163,7 +163,7 @@ void loop() {
     if(lockerOpen == 1 && unreserveFlag == 0){ 
       unreserveTimer = unreserveTimer + 10;
       delay(10);
-      Serial.println(unreserveTimer);
+      //Serial.println(unreserveTimer);
       if(unreserveTimer >= 10000){
         unreserveFlag = 1;
         timeOutFlag = 0;
