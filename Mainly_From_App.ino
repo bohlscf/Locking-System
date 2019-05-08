@@ -1,4 +1,4 @@
-#include <Keypad.h> //arduino library from Mark Stanley and Alexander Brevig
+ #include <Keypad.h> //arduino library from Mark Stanley and Alexander Brevig
 #include <Servo.h>
 #include <LiquidCrystal.h>
 
@@ -101,10 +101,14 @@ void loop() {
 //------------------------    APP INPUTS    ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
   reserveSignal = analogRead(reservePin);
   openSignal = analogRead(appOpenPin);
- // Serial.println(openSignal);
   force = analogRead(pressurePin);
-  Serial.println(force);
-  if(reserved == 0 && force < 800                          ){
+  
+  Serial.print("reserveSignal = ");
+  Serial.println(reserveSignal);
+  Serial.print("openSignal = ");
+  Serial.println(openSignal);
+  
+  if(reserved == 0 && force < 800){ // 50
     tone(buzzerPin, 440);
   }
   else{
@@ -163,7 +167,7 @@ void loop() {
     if(lockerOpen == 1 && unreserveFlag == 0){ 
       unreserveTimer = unreserveTimer + 10;
       delay(10);
-      //Serial.println(unreserveTimer);
+      Serial.println(unreserveTimer);
       if(unreserveTimer >= 10000){
         unreserveFlag = 1;
         timeOutFlag = 0;
@@ -259,7 +263,7 @@ void loop() {
               lcd.print("password set");
           } 
           
-          else if(customKey == 'A'){  //   should be A //customKey == '0' || 
+          else if(customKey == 'A' || customKey == '0'){  //   should be A //customKey == '0' || 
               lockerOpen = 0;
               Serial.println("Locker is locked");
               lcd.clear();
@@ -321,7 +325,11 @@ void loop() {
           reserveSignal = analogRead(reservePin);
           //verifySignal = analogRead(verifyPin);
           openSignal = analogRead(appOpenPin);
-          //Serial.println(verifySignal);
+          Serial.print("reserveSignal = ");
+          Serial.println(reserveSignal);
+          Serial.print("openSignal = ");
+          Serial.println(openSignal);
+                  
 
           
           if(myKey){
